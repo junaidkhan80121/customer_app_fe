@@ -10,6 +10,7 @@ export default function ResponsiveTable({ children }: { children: ReactNode }) {
         width: '100%',
         overflowX: 'auto',
         WebkitOverflowScrolling: 'touch',
+        borderRadius: 2,
         '& .MuiTable-root': { minWidth: 640 },
       }}
     >
