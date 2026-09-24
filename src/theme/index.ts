@@ -4,17 +4,17 @@ import { createTheme, ThemeOptions } from '@mui/material/styles';
 export function getAppBackground(mode: 'light' | 'dark') {
   if (mode === 'dark') {
     return [
-      'radial-gradient(ellipse 100% 80% at 20% 0%, rgba(0,167,111,0.18), transparent 55%)',
-      'radial-gradient(ellipse 90% 70% at 100% 30%, rgba(0,167,111,0.10), transparent 50%)',
-      'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,167,111,0.12), transparent 55%)',
+      'radial-gradient(ellipse 100% 80% at 20% 0%, rgba(0,167,111,0.28), transparent 55%)',
+      'radial-gradient(ellipse 90% 70% at 100% 30%, rgba(0,167,111,0.16), transparent 50%)',
+      'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,167,111,0.20), transparent 55%)',
       'linear-gradient(180deg, #161C24 0%, #161C24 100%)',
     ].join(', ');
   }
   return [
-    'radial-gradient(ellipse 100% 80% at 20% 0%, rgba(0,167,111,0.16), transparent 55%)',
-    'radial-gradient(ellipse 90% 70% at 100% 30%, rgba(0,167,111,0.08), transparent 50%)',
-    'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,167,111,0.10), transparent 55%)',
-    'linear-gradient(180deg, #F4FBF7 0%, #F9FAFB 45%, #F9FAFB 100%)',
+    'radial-gradient(ellipse 100% 80% at 20% 0%, rgba(0,167,111,0.26), transparent 55%)',
+    'radial-gradient(ellipse 90% 70% at 100% 30%, rgba(0,167,111,0.14), transparent 50%)',
+    'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,167,111,0.18), transparent 55%)',
+    'linear-gradient(180deg, #E8F7F0 0%, #F2FAF6 40%, #F9FAFB 100%)',
   ].join(', ');
 }
 
