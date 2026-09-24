@@ -17,6 +17,9 @@ import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import { useAuth } from '../auth/AuthContext';
 import { useThemeMode } from '../theme/ThemeModeContext';
 import { SplashScreen } from '../components/loading-screen';
+import { IllustrationWelcome } from '../assets/illustrations';
+import Logo from '../components/logo/Logo';
+import { getAppBackground } from '../theme';
 
 export default function LoginPage() {
   const { admin, login, loading } = useAuth();
@@ -47,60 +50,96 @@ export default function LoginPage() {
       sx={{
         minHeight: '100vh',
         display: 'grid',
-        placeItems: 'center',
+        gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
         position: 'relative',
-        background: (t) =>
-          t.palette.mode === 'dark'
-            ? 'radial-gradient(circle at 20% 20%, rgba(0,167,111,0.18), transparent 40%), radial-gradient(circle at 80% 0%, rgba(255,255,255,0.04), transparent 35%), #161C24'
-            : 'radial-gradient(circle at 20% 20%, rgba(0,167,111,0.12), transparent 40%), radial-gradient(circle at 80% 0%, rgba(28,37,46,0.08), transparent 35%), #F9FAFB',
-        p: 2,
+        background: getAppBackground(mode),
       }}
     >
       <Tooltip title={mode === 'dark' ? 'Light mode' : 'Dark mode'}>
         <IconButton
           onClick={toggleMode}
-          sx={{ position: 'absolute', top: 16, right: 16 }}
+          sx={{ position: 'absolute', top: 16, right: 16, zIndex: 2 }}
           aria-label="Toggle color mode"
         >
           {mode === 'dark' ? <LightModeOutlinedIcon /> : <DarkModeOutlinedIcon />}
         </IconButton>
       </Tooltip>
-      <Card sx={{ width: '100%', maxWidth: 420 }}>
-        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-          <Typography variant="h5" gutterBottom>
+
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          p: 4,
+          bgcolor: (t) => (t.palette.mode === 'dark' ? 'rgba(0,167,111,0.06)' : 'rgba(0,167,111,0.06)'),
+          borderRight: '1px dashed',
+          borderColor: 'divider',
+        }}
+      >
+        <Box
+          sx={{
+            animation: 'lt-float 3.5s ease-in-out infinite',
+            '@keyframes lt-float': {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-12px)' },
+            },
+          }}
+        >
+          <IllustrationWelcome sx={{ maxWidth: 360 }} />
+        </Box>
+        <Box sx={{ textAlign: 'center', maxWidth: 360 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>
             Lala Traders
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Admin sign in
+          <Typography color="text.secondary" sx={{ mt: 1 }}>
+            Track wholesale purchases, points, and top buyers in one place.
           </Typography>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-          <Stack component="form" spacing={2} onSubmit={onSubmit}>
-            <TextField
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              fullWidth
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              fullWidth
-            />
-            <Button type="submit" variant="contained" color="secondary" size="large" disabled={submitting}>
-              {submitting ? 'Signing in…' : 'Sign in'}
-            </Button>
-          </Stack>
-        </CardContent>
-      </Card>
+        </Box>
+      </Box>
+
+      <Box sx={{ display: 'grid', placeItems: 'center', p: 2 }}>
+        <Card sx={{ width: '100%', maxWidth: 420 }}>
+          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+              <Logo sx={{ width: 44, height: 44, fontSize: 16 }} />
+              <Box>
+                <Typography variant="h5">Sign in</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Admin access only
+                </Typography>
+              </Box>
+            </Stack>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            <Stack component="form" spacing={2} onSubmit={onSubmit}>
+              <TextField
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                fullWidth
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                fullWidth
+              />
+              <Button type="submit" variant="contained" color="secondary" size="large" disabled={submitting}>
+                {submitting ? 'Signing in…' : 'Sign in'}
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 }

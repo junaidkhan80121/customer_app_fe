@@ -12,7 +12,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TablePagination,
   TableRow,
   Typography,
@@ -24,6 +23,14 @@ import type { CustomerType, RankingRow, PageMeta, SortKey, TimeSlab } from '../a
 import { money, num } from '../utils/format';
 import FilterChips, { FilterChipItem } from '../components/FilterChips';
 import ResponsiveTable from '../components/ResponsiveTable';
+import EmptyContent from '../components/EmptyContent';
+import PageHeader from '../components/PageHeader';
+import { IllustrationTrophy } from '../assets/illustrations';
+import SortableTableHead, {
+  SortOrder,
+  SortableColumn,
+  nextSortState,
+} from '../components/table/SortableTableHead';
 
 interface RankingResponse {
   items: RankingRow[];
@@ -33,12 +40,26 @@ interface RankingResponse {
   to_date?: string | null;
 }
 
+type LeaderboardCol = SortKey | 'rank';
+
+const COLUMNS: SortableColumn<LeaderboardCol>[] = [
+  { id: 'rank', label: '#', sortable: false },
+  { id: 'customer_name', label: 'Customer' },
+  { id: 'phone', label: 'Phone' },
+  { id: 'type_name', label: 'Type' },
+  { id: 'invoice_count', label: 'Invoices', align: 'right' },
+  { id: 'qty', label: 'Qty', align: 'right' },
+  { id: 'amount', label: 'Amount', align: 'right' },
+  { id: 'points', label: 'Points', align: 'right' },
+];
+
 export default function LeaderboardPage() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [slabId, setSlabId] = useState('');
   const [typeId, setTypeId] = useState('');
   const [sort, setSort] = useState<SortKey>('amount');
+  const [order, setOrder] = useState<SortOrder>('desc');
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
 
@@ -56,7 +77,7 @@ export default function LeaderboardPage() {
   const toStr = toDate ? toDate.format('YYYY-MM-DD') : '';
 
   const { data, isLoading } = useQuery({
-    queryKey: ['rankings', page, pageSize, slabId, typeId, sort, fromStr, toStr],
+    queryKey: ['rankings', page, pageSize, slabId, typeId, sort, order, fromStr, toStr],
     queryFn: async () =>
       (
         await api.get<RankingResponse>('/api/rankings', {
@@ -66,6 +87,7 @@ export default function LeaderboardPage() {
             slab_id: fromStr || toStr ? undefined : slabId || undefined,
             type_id: typeId || undefined,
             sort,
+            order,
             from_date: fromStr || undefined,
             to_date: toStr || undefined,
           },
@@ -97,12 +119,13 @@ export default function LeaderboardPage() {
         },
       });
     }
-    if (sort !== 'amount') {
+    if (sort !== 'amount' || order !== 'desc') {
       chips.push({
         key: 'sort',
-        label: `Sort: ${sort}`,
+        label: `Sort: ${sort} (${order})`,
         onDelete: () => {
           setSort('amount');
+          setOrder('desc');
           setPage(0);
         },
       });
@@ -128,12 +151,13 @@ export default function LeaderboardPage() {
       });
     }
     return chips;
-  }, [slabId, typeId, sort, fromStr, toStr, slabs, types]);
+  }, [slabId, typeId, sort, order, fromStr, toStr, slabs, types]);
 
   const clearFilters = () => {
     setSlabId('');
     setTypeId('');
     setSort('amount');
+    setOrder('desc');
     setFromDate(null);
     setToDate(null);
     setPage(0);
@@ -141,14 +165,15 @@ export default function LeaderboardPage() {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4">Leaderboard</Typography>
-        <Typography color="text.secondary">
-          Who bought the most in the selected time slab
-          {data?.slab_name ? ` · ${data.slab_name}` : ''}
-          {data?.from_date && data?.to_date ? ` · ${data.from_date} → ${data.to_date}` : ''}
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Leaderboard"
+        description={
+          `Who bought the most in the selected time slab` +
+          (data?.slab_name ? ` · ${data.slab_name}` : '') +
+          (data?.from_date && data?.to_date ? ` · ${data.from_date} → ${data.to_date}` : '')
+        }
+        illustration={<IllustrationTrophy />}
+      />
 
       <Card>
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
@@ -197,21 +222,6 @@ export default function LeaderboardPage() {
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 150 }, flex: { sm: '0 1 150px' } }}>
-              <InputLabel>Sort by</InputLabel>
-              <Select
-                label="Sort by"
-                value={sort}
-                onChange={(e) => {
-                  setPage(0);
-                  setSort(e.target.value as SortKey);
-                }}
-              >
-                <MenuItem value="amount">Amount</MenuItem>
-                <MenuItem value="qty">Quantity</MenuItem>
-                <MenuItem value="points">Points</MenuItem>
-              </Select>
-            </FormControl>
             <DatePicker
               label="From"
               value={fromDate}
@@ -220,7 +230,11 @@ export default function LeaderboardPage() {
                 setFromDate(v);
               }}
               slotProps={{
-                textField: { size: 'small', fullWidth: true, sx: { minWidth: { sm: 150 }, flex: { sm: '0 1 160px' } } },
+                textField: {
+                  size: 'small',
+                  fullWidth: true,
+                  sx: { minWidth: { sm: 150 }, flex: { sm: '0 1 160px' } },
+                },
               }}
             />
             <DatePicker
@@ -232,7 +246,11 @@ export default function LeaderboardPage() {
                 setToDate(v);
               }}
               slotProps={{
-                textField: { size: 'small', fullWidth: true, sx: { minWidth: { sm: 150 }, flex: { sm: '0 1 160px' } } },
+                textField: {
+                  size: 'small',
+                  fullWidth: true,
+                  sx: { minWidth: { sm: 150 }, flex: { sm: '0 1 160px' } },
+                },
               }}
             />
           </Stack>
@@ -247,18 +265,18 @@ export default function LeaderboardPage() {
 
           <ResponsiveTable>
             <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Customer</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell align="right">Invoices</TableCell>
-                  <TableCell align="right">Qty</TableCell>
-                  <TableCell align="right">Amount</TableCell>
-                  <TableCell align="right">Points</TableCell>
-                </TableRow>
-              </TableHead>
+              <SortableTableHead
+                columns={COLUMNS}
+                orderBy={sort}
+                order={order}
+                onRequestSort={(col) => {
+                  if (col === 'rank') return;
+                  const next = nextSortState(sort, order, col, 'desc');
+                  setSort(next.orderBy);
+                  setOrder(next.order);
+                  setPage(0);
+                }}
+              />
               <TableBody>
                 {(data?.items || []).map((row, idx) => (
                   <TableRow key={row.customer_id}>
@@ -274,7 +292,15 @@ export default function LeaderboardPage() {
                 ))}
                 {!isLoading && !data?.items?.length && (
                   <TableRow>
-                    <TableCell colSpan={8}>No results for this filter</TableCell>
+                    <TableCell colSpan={8} sx={{ border: 0, py: 0 }}>
+                      <EmptyContent
+                        compact
+                        variant="search"
+                        title="No rankings for this filter"
+                        description="Try another time slab, type, or date range."
+                        illustration={<IllustrationTrophy sx={{ maxWidth: 160 }} />}
+                      />
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
