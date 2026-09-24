@@ -1,7 +1,11 @@
 import { Box, GlobalStyles } from '@mui/material';
 import Logo from '../logo/Logo';
+import { getAppBackground } from '../../theme';
+import { useThemeMode } from '../../theme/ThemeModeContext';
 
 export default function SplashScreen() {
+  const { mode } = useThemeMode();
+
   return (
     <>
       <GlobalStyles
@@ -23,7 +27,7 @@ export default function SplashScreen() {
           position: 'fixed',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: 'background.default',
+          background: getAppBackground(mode),
         }}
       >
         <Box sx={{ position: 'relative', display: 'inline-flex' }}>
