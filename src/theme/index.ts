@@ -1,10 +1,21 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 
-/** Shared page background (same soft green radial as 404) */
+/** Full-viewport soft green wash (not just a top corner blob) */
 export function getAppBackground(mode: 'light' | 'dark') {
-  return mode === 'dark'
-    ? 'radial-gradient(ellipse at 30% 20%, rgba(0,167,111,0.12), transparent 50%), #161C24'
-    : 'radial-gradient(ellipse at 30% 20%, rgba(0,167,111,0.1), transparent 50%), #F9FAFB';
+  if (mode === 'dark') {
+    return [
+      'radial-gradient(ellipse 100% 80% at 20% 0%, rgba(0,167,111,0.18), transparent 55%)',
+      'radial-gradient(ellipse 90% 70% at 100% 30%, rgba(0,167,111,0.10), transparent 50%)',
+      'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,167,111,0.12), transparent 55%)',
+      'linear-gradient(180deg, #161C24 0%, #161C24 100%)',
+    ].join(', ');
+  }
+  return [
+    'radial-gradient(ellipse 100% 80% at 20% 0%, rgba(0,167,111,0.16), transparent 55%)',
+    'radial-gradient(ellipse 90% 70% at 100% 30%, rgba(0,167,111,0.08), transparent 50%)',
+    'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,167,111,0.10), transparent 55%)',
+    'linear-gradient(180deg, #F4FBF7 0%, #F9FAFB 45%, #F9FAFB 100%)',
+  ].join(', ');
 }
 
 const shared: ThemeOptions = {
@@ -79,17 +90,31 @@ export function createAppTheme(mode: 'light' | 'dark') {
       MuiCssBaseline: {
         styleOverrides: {
           html: {
-            minHeight: '100%',
+            height: '100%',
           },
           body: {
             minHeight: '100%',
+            margin: 0,
             background: appBg,
             backgroundAttachment: 'fixed',
             backgroundRepeat: 'no-repeat',
-            backgroundSize: 'cover',
+            backgroundSize: '100% 100%',
           },
           '#root': {
+            position: 'relative',
             minHeight: '100vh',
+            isolation: 'isolate',
+          },
+          /* Fixed full-viewport layer so gradient never clips mid-page */
+          '#root::before': {
+            content: '""',
+            position: 'fixed',
+            inset: 0,
+            zIndex: -1,
+            pointerEvents: 'none',
+            background: appBg,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: '100% 100%',
           },
         },
       },
@@ -108,8 +133,8 @@ export function createAppTheme(mode: 'light' | 'dark') {
           paper: {
             borderRight: '1px dashed rgba(145,158,171,0.24)',
             backgroundImage: 'none',
-            backgroundColor: isDark ? 'rgba(22,28,36,0.92)' : 'rgba(249,250,251,0.92)',
-            backdropFilter: 'blur(8px)',
+            backgroundColor: isDark ? 'rgba(22,28,36,0.55)' : 'rgba(255,255,255,0.55)',
+            backdropFilter: 'blur(10px)',
           },
         },
       },

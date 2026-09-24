@@ -110,8 +110,8 @@ export default function DashboardLayout() {
           borderBottom: '1px dashed',
           borderColor: 'divider',
           bgcolor: (t) =>
-            t.palette.mode === 'dark' ? 'rgba(22,28,36,0.72)' : 'rgba(249,250,251,0.72)',
-          backdropFilter: 'blur(8px)',
+            t.palette.mode === 'dark' ? 'rgba(22,28,36,0.55)' : 'rgba(255,255,255,0.55)',
+          backdropFilter: 'blur(10px)',
         }}
       >
         <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, gap: 1 }}>
