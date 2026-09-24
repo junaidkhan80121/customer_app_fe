@@ -99,7 +99,7 @@ export default function DashboardLayout() {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'transparent' }}>
       <AppBar
         position="fixed"
         color="inherit"
@@ -110,8 +110,8 @@ export default function DashboardLayout() {
           borderBottom: '1px dashed',
           borderColor: 'divider',
           bgcolor: (t) =>
-            t.palette.mode === 'dark' ? 'rgba(22,28,36,0.8)' : 'rgba(249,250,251,0.8)',
-          backdropFilter: 'blur(6px)',
+            t.palette.mode === 'dark' ? 'rgba(22,28,36,0.72)' : 'rgba(249,250,251,0.72)',
+          backdropFilter: 'blur(8px)',
         }}
       >
         <Toolbar sx={{ minHeight: { xs: 56, sm: 64 }, gap: 1 }}>
