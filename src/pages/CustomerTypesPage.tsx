@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
@@ -14,7 +14,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableRow,
   TextField,
   Typography,
@@ -22,6 +21,23 @@ import {
 } from '@mui/material';
 import api from '../api/client';
 import type { CustomerType } from '../api/types';
+import EmptyContent, { EmptyActionButton } from '../components/EmptyContent';
+import PageHeader from '../components/PageHeader';
+import { IllustrationEmpty } from '../assets/illustrations';
+import SortableTableHead, {
+  SortOrder,
+  SortableColumn,
+  compareValues,
+  nextSortState,
+} from '../components/table/SortableTableHead';
+
+type TypeSort = 'name' | 'active' | 'actions';
+
+const COLUMNS: SortableColumn<TypeSort>[] = [
+  { id: 'name', label: 'Name' },
+  { id: 'active', label: 'Active' },
+  { id: 'actions', label: '', sortable: false },
+];
 
 export default function CustomerTypesPage() {
   const qc = useQueryClient();
@@ -30,11 +46,23 @@ export default function CustomerTypesPage() {
   const [name, setName] = useState('');
   const [active, setActive] = useState(true);
   const [error, setError] = useState('');
+  const [sort, setSort] = useState<TypeSort>('name');
+  const [order, setOrder] = useState<SortOrder>('asc');
 
   const { data = [] } = useQuery({
     queryKey: ['customer-types'],
     queryFn: async () => (await api.get<CustomerType[]>('/api/customer-types')).data,
   });
+
+  const rows = useMemo(() => {
+    const list = [...data];
+    list.sort((a, b) => {
+      const av = sort === 'active' ? a.is_active : a.name;
+      const bv = sort === 'active' ? b.is_active : b.name;
+      return compareValues(av, bv, order);
+    });
+    return list;
+  }, [data, sort, order]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -53,38 +81,43 @@ export default function CustomerTypesPage() {
 
   return (
     <Stack spacing={3}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Box>
-          <Typography variant="h4">Customer types</Typography>
-          <Typography color="text.secondary">Add plumber, mason, or any trade type</Typography>
-        </Box>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => {
-            setEditing(null);
-            setName('');
-            setActive(true);
-            setError('');
-            setOpen(true);
-          }}
-        >
-          Add type
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Customer types"
+        description="Add plumber, mason, or any trade type"
+        illustration={<IllustrationEmpty />}
+        action={
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              setEditing(null);
+              setName('');
+              setActive(true);
+              setError('');
+              setOpen(true);
+            }}
+          >
+            Add type
+          </Button>
+        }
+      />
 
       <Card>
         <CardContent>
           <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Active</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
+            <SortableTableHead
+              columns={COLUMNS}
+              orderBy={sort}
+              order={order}
+              onRequestSort={(col) => {
+                if (col === 'actions') return;
+                const next = nextSortState(sort, order, col, 'asc');
+                setSort(next.orderBy);
+                setOrder(next.order);
+              }}
+            />
             <TableBody>
-              {data.map((t) => (
+              {rows.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell>{t.name}</TableCell>
                   <TableCell>{t.is_active ? 'Yes' : 'No'}</TableCell>
@@ -104,6 +137,29 @@ export default function CustomerTypesPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {!rows.length && (
+                <TableRow>
+                  <TableCell colSpan={3} sx={{ border: 0, py: 0 }}>
+                    <EmptyContent
+                      compact
+                      title="No types yet"
+                      description="Create trade types like plumber or mason."
+                      action={
+                        <EmptyActionButton
+                          label="Add type"
+                          onClick={() => {
+                            setEditing(null);
+                            setName('');
+                            setActive(true);
+                            setError('');
+                            setOpen(true);
+                          }}
+                        />
+                      }
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
