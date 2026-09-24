@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
@@ -19,7 +19,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableRow,
   TextField,
   Typography,
@@ -27,6 +26,24 @@ import {
 } from '@mui/material';
 import api from '../api/client';
 import type { PointsMode, ShopSettings, TimeSlab } from '../api/types';
+import PageHeader from '../components/PageHeader';
+import EmptyContent from '../components/EmptyContent';
+import { IllustrationWelcome } from '../assets/illustrations';
+import SortableTableHead, {
+  SortOrder,
+  SortableColumn,
+  compareValues,
+  nextSortState,
+} from '../components/table/SortableTableHead';
+
+type SlabSort = 'name' | 'months' | 'default' | 'actions';
+
+const SLAB_COLUMNS: SortableColumn<SlabSort>[] = [
+  { id: 'name', label: 'Name' },
+  { id: 'months', label: 'Months' },
+  { id: 'default', label: 'Default' },
+  { id: 'actions', label: '', sortable: false },
+];
 
 export default function SettingsPage() {
   const qc = useQueryClient();
@@ -41,6 +58,8 @@ export default function SettingsPage() {
   const [slabName, setSlabName] = useState('');
   const [slabMonths, setSlabMonths] = useState('6');
   const [slabDefault, setSlabDefault] = useState(false);
+  const [slabSort, setSlabSort] = useState<SlabSort>('months');
+  const [slabOrder, setSlabOrder] = useState<SortOrder>('asc');
 
   const { data: settings } = useQuery({
     queryKey: ['settings'],
@@ -51,6 +70,18 @@ export default function SettingsPage() {
     queryKey: ['time-slabs'],
     queryFn: async () => (await api.get<TimeSlab[]>('/api/time-slabs')).data,
   });
+
+  const sortedSlabs = useMemo(() => {
+    const list = [...slabs];
+    list.sort((a, b) => {
+      const av =
+        slabSort === 'months' ? a.months : slabSort === 'default' ? a.is_default : a.name;
+      const bv =
+        slabSort === 'months' ? b.months : slabSort === 'default' ? b.is_default : b.name;
+      return compareValues(av, bv, slabOrder);
+    });
+    return list;
+  }, [slabs, slabSort, slabOrder]);
 
   useEffect(() => {
     if (!settings) return;
@@ -101,10 +132,11 @@ export default function SettingsPage() {
 
   return (
     <Stack spacing={3}>
-      <Box>
-        <Typography variant="h4">Settings</Typography>
-        <Typography color="text.secondary">Points rules and time slabs</Typography>
-      </Box>
+      <PageHeader
+        title="Settings"
+        description="Points rules and time slabs"
+        illustration={<IllustrationWelcome />}
+      />
 
       {msg && <Alert severity="success" onClose={() => setMsg('')}>{msg}</Alert>}
 
@@ -190,16 +222,19 @@ export default function SettingsPage() {
             </Button>
           </Stack>
           <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Months</TableCell>
-                <TableCell>Default</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
+            <SortableTableHead
+              columns={SLAB_COLUMNS}
+              orderBy={slabSort}
+              order={slabOrder}
+              onRequestSort={(col) => {
+                if (col === 'actions') return;
+                const next = nextSortState(slabSort, slabOrder, col, 'asc');
+                setSlabSort(next.orderBy);
+                setSlabOrder(next.order);
+              }}
+            />
             <TableBody>
-              {slabs.map((s) => (
+              {sortedSlabs.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell>{s.name}</TableCell>
                   <TableCell>{s.months}</TableCell>
@@ -223,6 +258,17 @@ export default function SettingsPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {!sortedSlabs.length && (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ border: 0, py: 0 }}>
+                    <EmptyContent
+                      compact
+                      title="No time slabs"
+                      description="Add slabs like Monthly or Yearly for leaderboard filters."
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

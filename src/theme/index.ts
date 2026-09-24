@@ -1,5 +1,12 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
 
+/** Shared page background (same soft green radial as 404) */
+export function getAppBackground(mode: 'light' | 'dark') {
+  return mode === 'dark'
+    ? 'radial-gradient(ellipse at 30% 20%, rgba(0,167,111,0.12), transparent 50%), #161C24'
+    : 'radial-gradient(ellipse at 30% 20%, rgba(0,167,111,0.1), transparent 50%), #F9FAFB';
+}
+
 const shared: ThemeOptions = {
   typography: {
     fontFamily: '"Public Sans", sans-serif',
@@ -33,13 +40,6 @@ const shared: ThemeOptions = {
         },
       },
     },
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          whiteSpace: 'nowrap',
-        },
-      },
-    },
     MuiDialog: {
       styleOverrides: {
         paper: {
@@ -53,6 +53,7 @@ const shared: ThemeOptions = {
 
 export function createAppTheme(mode: 'light' | 'dark') {
   const isDark = mode === 'dark';
+  const appBg = getAppBackground(mode);
   return createTheme({
     ...shared,
     palette: {
@@ -75,6 +76,23 @@ export function createAppTheme(mode: 'light' | 'dark') {
     },
     components: {
       ...shared.components,
+      MuiCssBaseline: {
+        styleOverrides: {
+          html: {
+            minHeight: '100%',
+          },
+          body: {
+            minHeight: '100%',
+            background: appBg,
+            backgroundAttachment: 'fixed',
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+          },
+          '#root': {
+            minHeight: '100vh',
+          },
+        },
+      },
       MuiCard: {
         styleOverrides: {
           root: {
@@ -90,6 +108,58 @@ export function createAppTheme(mode: 'light' | 'dark') {
           paper: {
             borderRight: '1px dashed rgba(145,158,171,0.24)',
             backgroundImage: 'none',
+            backgroundColor: isDark ? 'rgba(22,28,36,0.92)' : 'rgba(249,250,251,0.92)',
+            backdropFilter: 'blur(8px)',
+          },
+        },
+      },
+      MuiTableContainer: {
+        styleOverrides: {
+          root: {
+            borderRadius: 12,
+            overflow: 'auto',
+          },
+        },
+      },
+      MuiTable: {
+        styleOverrides: {
+          root: {
+            borderCollapse: 'collapse',
+            border: '1px solid rgba(145,158,171,0.24)',
+          },
+        },
+      },
+      MuiTableHead: {
+        styleOverrides: {
+          root: {
+            '& .MuiTableCell-head': {
+              backgroundColor: isDark ? 'rgba(145,158,171,0.12)' : 'rgba(145,158,171,0.08)',
+              color: isDark ? '#FFFFFF' : '#1C252E',
+              fontWeight: 600,
+              fontSize: 13,
+            },
+          },
+        },
+      },
+      MuiTableCell: {
+        styleOverrides: {
+          root: {
+            whiteSpace: 'nowrap',
+            border: '1px solid rgba(145,158,171,0.24)',
+            padding: '12px 16px',
+            fontSize: 14,
+          },
+          body: {
+            color: isDark ? '#FFFFFF' : '#1C252E',
+          },
+        },
+      },
+      MuiTableRow: {
+        styleOverrides: {
+          root: {
+            '&:hover': {
+              backgroundColor: isDark ? 'rgba(145,158,171,0.08)' : 'rgba(145,158,171,0.06)',
+            },
           },
         },
       },
