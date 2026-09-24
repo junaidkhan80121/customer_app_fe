@@ -18,6 +18,22 @@ export function getAppBackground(mode: 'light' | 'dark') {
   ].join(', ');
 }
 
+/** Soft green wash for tables / data panels */
+export function getTableBackground(mode: 'light' | 'dark') {
+  if (mode === 'dark') {
+    return [
+      'radial-gradient(ellipse 80% 60% at 0% 0%, rgba(0,167,111,0.22), transparent 55%)',
+      'radial-gradient(ellipse 70% 50% at 100% 100%, rgba(0,167,111,0.14), transparent 50%)',
+      'linear-gradient(180deg, rgba(33,43,54,0.92) 0%, rgba(33,43,54,0.88) 100%)',
+    ].join(', ');
+  }
+  return [
+    'radial-gradient(ellipse 80% 60% at 0% 0%, rgba(0,167,111,0.18), transparent 55%)',
+    'radial-gradient(ellipse 70% 50% at 100% 100%, rgba(0,167,111,0.12), transparent 50%)',
+    'linear-gradient(180deg, rgba(255,255,255,0.82) 0%, rgba(232,247,240,0.9) 100%)',
+  ].join(', ');
+}
+
 const shared: ThemeOptions = {
   typography: {
     fontFamily: '"Public Sans", sans-serif',
@@ -65,6 +81,7 @@ const shared: ThemeOptions = {
 export function createAppTheme(mode: 'light' | 'dark') {
   const isDark = mode === 'dark';
   const appBg = getAppBackground(mode);
+  const tableBg = getTableBackground(mode);
   return createTheme({
     ...shared,
     palette: {
@@ -122,6 +139,8 @@ export function createAppTheme(mode: 'light' | 'dark') {
         styleOverrides: {
           root: {
             borderRadius: 16,
+            backgroundImage: tableBg,
+            backgroundColor: 'transparent',
             boxShadow: isDark
               ? '0 0 2px 0 rgba(0,0,0,0.4), 0 12px 24px -4px rgba(0,0,0,0.35)'
               : '0 0 2px 0 rgba(145,158,171,0.2), 0 12px 24px -4px rgba(145,158,171,0.12)',
@@ -143,6 +162,9 @@ export function createAppTheme(mode: 'light' | 'dark') {
           root: {
             borderRadius: 12,
             overflow: 'auto',
+            backgroundImage: tableBg,
+            backgroundColor: 'transparent',
+            border: '1px solid rgba(145,158,171,0.24)',
           },
         },
       },
@@ -151,6 +173,7 @@ export function createAppTheme(mode: 'light' | 'dark') {
           root: {
             borderCollapse: 'collapse',
             border: '1px solid rgba(145,158,171,0.24)',
+            backgroundColor: 'transparent',
           },
         },
       },
@@ -158,7 +181,7 @@ export function createAppTheme(mode: 'light' | 'dark') {
         styleOverrides: {
           root: {
             '& .MuiTableCell-head': {
-              backgroundColor: isDark ? 'rgba(145,158,171,0.12)' : 'rgba(145,158,171,0.08)',
+              backgroundColor: isDark ? 'rgba(0,167,111,0.18)' : 'rgba(0,167,111,0.14)',
               color: isDark ? '#FFFFFF' : '#1C252E',
               fontWeight: 600,
               fontSize: 13,
@@ -173,6 +196,7 @@ export function createAppTheme(mode: 'light' | 'dark') {
             border: '1px solid rgba(145,158,171,0.24)',
             padding: '12px 16px',
             fontSize: 14,
+            backgroundColor: 'transparent',
           },
           body: {
             color: isDark ? '#FFFFFF' : '#1C252E',
@@ -182,8 +206,12 @@ export function createAppTheme(mode: 'light' | 'dark') {
       MuiTableRow: {
         styleOverrides: {
           root: {
+            backgroundColor: 'transparent',
+            '&:nth-of-type(even)': {
+              backgroundColor: isDark ? 'rgba(0,167,111,0.06)' : 'rgba(0,167,111,0.05)',
+            },
             '&:hover': {
-              backgroundColor: isDark ? 'rgba(145,158,171,0.08)' : 'rgba(145,158,171,0.06)',
+              backgroundColor: isDark ? 'rgba(0,167,111,0.12)' : 'rgba(0,167,111,0.10)',
             },
           },
         },
