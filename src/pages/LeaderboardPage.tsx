@@ -200,6 +200,9 @@ export default function LeaderboardPage() {
                   <MenuItem key={s.id} value={s.id}>
                     {s.name}
                     {s.is_default ? ' (default)' : ''}
+                    {s.start_date || s.end_date
+                      ? ` · ${s.start_date || '…'} → ${s.end_date || 'today'}`
+                      : ` · ${s.months} mo rolling`}
                   </MenuItem>
                 ))}
               </Select>

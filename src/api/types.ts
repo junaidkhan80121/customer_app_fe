@@ -48,6 +48,8 @@ export interface TimeSlab {
   id: string;
   name: string;
   months: number;
+  start_date?: string | null;
+  end_date?: string | null;
   is_default: boolean;
   created_at: string;
 }

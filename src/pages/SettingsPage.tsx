@@ -24,6 +24,8 @@ import {
   Typography,
   FormControlLabel,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs, { Dayjs } from 'dayjs';
 import api from '../api/client';
 import type { PointsMode, ShopSettings, TimeSlab } from '../api/types';
 import PageHeader from '../components/PageHeader';
@@ -36,14 +38,22 @@ import SortableTableHead, {
   nextSortState,
 } from '../components/table/SortableTableHead';
 
-type SlabSort = 'name' | 'months' | 'default' | 'actions';
+type SlabSort = 'name' | 'months' | 'window' | 'default' | 'actions';
 
 const SLAB_COLUMNS: SortableColumn<SlabSort>[] = [
   { id: 'name', label: 'Name' },
   { id: 'months', label: 'Months' },
+  { id: 'window', label: 'Fixed window' },
   { id: 'default', label: 'Default' },
   { id: 'actions', label: '', sortable: false },
 ];
+
+function slabWindowLabel(s: TimeSlab) {
+  if (s.start_date || s.end_date) {
+    return `${s.start_date || '…'} → ${s.end_date || 'today'}`;
+  }
+  return 'Rolling';
+}
 
 export default function SettingsPage() {
   const qc = useQueryClient();
@@ -58,6 +68,9 @@ export default function SettingsPage() {
   const [slabName, setSlabName] = useState('');
   const [slabMonths, setSlabMonths] = useState('6');
   const [slabDefault, setSlabDefault] = useState(false);
+  const [slabFixed, setSlabFixed] = useState(false);
+  const [slabStart, setSlabStart] = useState<Dayjs | null>(null);
+  const [slabEnd, setSlabEnd] = useState<Dayjs | null>(null);
   const [slabSort, setSlabSort] = useState<SlabSort>('months');
   const [slabOrder, setSlabOrder] = useState<SortOrder>('asc');
 
@@ -75,9 +88,21 @@ export default function SettingsPage() {
     const list = [...slabs];
     list.sort((a, b) => {
       const av =
-        slabSort === 'months' ? a.months : slabSort === 'default' ? a.is_default : a.name;
+        slabSort === 'months'
+          ? a.months
+          : slabSort === 'default'
+            ? a.is_default
+            : slabSort === 'window'
+              ? slabWindowLabel(a)
+              : a.name;
       const bv =
-        slabSort === 'months' ? b.months : slabSort === 'default' ? b.is_default : b.name;
+        slabSort === 'months'
+          ? b.months
+          : slabSort === 'default'
+            ? b.is_default
+            : slabSort === 'window'
+              ? slabWindowLabel(b)
+              : b.name;
       return compareValues(av, bv, slabOrder);
     });
     return list;
@@ -112,6 +137,8 @@ export default function SettingsPage() {
         name: slabName,
         months: Number(slabMonths),
         is_default: slabDefault,
+        start_date: slabFixed && slabStart ? slabStart.format('YYYY-MM-DD') : null,
+        end_date: slabFixed && slabEnd ? slabEnd.format('YYYY-MM-DD') : null,
       };
       if (editingSlab) {
         await api.patch(`/api/time-slabs/${editingSlab.id}`, payload);
@@ -124,6 +151,29 @@ export default function SettingsPage() {
       setSlabOpen(false);
     },
   });
+
+  const openNewSlab = () => {
+    setEditingSlab(null);
+    setSlabName('');
+    setSlabMonths('6');
+    setSlabDefault(false);
+    setSlabFixed(false);
+    setSlabStart(null);
+    setSlabEnd(null);
+    setSlabOpen(true);
+  };
+
+  const openEditSlab = (s: TimeSlab) => {
+    setEditingSlab(s);
+    setSlabName(s.name);
+    setSlabMonths(String(s.months));
+    setSlabDefault(s.is_default);
+    const hasFixed = Boolean(s.start_date || s.end_date);
+    setSlabFixed(hasFixed);
+    setSlabStart(s.start_date ? dayjs(s.start_date) : null);
+    setSlabEnd(s.end_date ? dayjs(s.end_date) : null);
+    setSlabOpen(true);
+  };
 
   const deleteSlab = useMutation({
     mutationFn: async (id: string) => api.delete(`/api/time-slabs/${id}`),
@@ -208,16 +258,7 @@ export default function SettingsPage() {
         <CardContent>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
             <Typography variant="h6">Time slabs</Typography>
-            <Button
-              variant="outlined"
-              onClick={() => {
-                setEditingSlab(null);
-                setSlabName('');
-                setSlabMonths('6');
-                setSlabDefault(false);
-                setSlabOpen(true);
-              }}
-            >
+            <Button variant="outlined" onClick={openNewSlab}>
               Add slab
             </Button>
           </Stack>
@@ -238,18 +279,10 @@ export default function SettingsPage() {
                 <TableRow key={s.id}>
                   <TableCell>{s.name}</TableCell>
                   <TableCell>{s.months}</TableCell>
+                  <TableCell>{slabWindowLabel(s)}</TableCell>
                   <TableCell>{s.is_default ? 'Yes' : '—'}</TableCell>
                   <TableCell align="right">
-                    <Button
-                      size="small"
-                      onClick={() => {
-                        setEditingSlab(s);
-                        setSlabName(s.name);
-                        setSlabMonths(String(s.months));
-                        setSlabDefault(s.is_default);
-                        setSlabOpen(true);
-                      }}
-                    >
+                    <Button size="small" onClick={() => openEditSlab(s)}>
                       Edit
                     </Button>
                     <Button size="small" color="error" onClick={() => deleteSlab.mutate(s.id)}>
@@ -260,11 +293,11 @@ export default function SettingsPage() {
               ))}
               {!sortedSlabs.length && (
                 <TableRow>
-                  <TableCell colSpan={4} sx={{ border: 0, py: 0 }}>
+                  <TableCell colSpan={5} sx={{ border: 0, py: 0 }}>
                     <EmptyContent
                       compact
                       title="No time slabs"
-                      description="Add slabs like Monthly or Yearly for leaderboard filters."
+                      description="Add rolling month slabs or fixed start/end windows for leaderboard filters."
                     />
                   </TableCell>
                 </TableRow>
@@ -274,18 +307,62 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={slabOpen} onClose={() => setSlabOpen(false)} fullWidth maxWidth="xs">
+      <Dialog open={slabOpen} onClose={() => setSlabOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>{editingSlab ? 'Edit slab' : 'Add slab'}</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField label="Name" value={slabName} onChange={(e) => setSlabName(e.target.value)} fullWidth />
             <TextField
-              label="Months"
+              label="Months (rolling)"
               type="number"
               value={slabMonths}
               onChange={(e) => setSlabMonths(e.target.value)}
               fullWidth
+              helperText={
+                slabFixed
+                  ? 'Used as fallback if fixed dates are cleared'
+                  : 'Rolling window: from today back this many months'
+              }
+              disabled={slabFixed}
             />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={slabFixed}
+                  onChange={(e) => {
+                    setSlabFixed(e.target.checked);
+                    if (!e.target.checked) {
+                      setSlabStart(null);
+                      setSlabEnd(null);
+                    }
+                  }}
+                />
+              }
+              label="Use fixed start / end dates"
+            />
+            {slabFixed && (
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <DatePicker
+                  label="Start date"
+                  value={slabStart}
+                  onChange={(v) => setSlabStart(v)}
+                  slotProps={{ textField: { size: 'small', fullWidth: true } }}
+                />
+                <DatePicker
+                  label="End date"
+                  value={slabEnd}
+                  minDate={slabStart || undefined}
+                  onChange={(v) => setSlabEnd(v)}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                      helperText: 'Leave empty to use today as end',
+                    },
+                  }}
+                />
+              </Stack>
+            )}
             <FormControlLabel
               control={<Switch checked={slabDefault} onChange={(e) => setSlabDefault(e.target.checked)} />}
               label="Set as default"
@@ -297,7 +374,12 @@ export default function SettingsPage() {
           <Button
             variant="contained"
             color="secondary"
-            disabled={!slabName || !(Number(slabMonths) > 0) || saveSlab.isPending}
+            disabled={
+              !slabName ||
+              !(Number(slabMonths) > 0) ||
+              (slabFixed && !slabStart && !slabEnd) ||
+              saveSlab.isPending
+            }
             onClick={() => saveSlab.mutate()}
           >
             Save

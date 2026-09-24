@@ -78,9 +78,11 @@ export default function CustomersPage() {
   const [order, setOrder] = useState<SortOrder>('asc');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
+  const [deleting, setDeleting] = useState<Customer | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [selectedType, setSelectedType] = useState<TypeOption | null>(null);
   const [error, setError] = useState('');
+  const [deleteError, setDeleteError] = useState('');
 
   const { data: types } = useQuery({
     queryKey: ['customer-types'],
@@ -147,6 +149,17 @@ export default function CustomersPage() {
     },
     onError: (err: any) =>
       setError(err?.message || err?.response?.data?.detail || 'Save failed'),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => api.delete(`/api/customers/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['customers'] });
+      setDeleting(null);
+      setDeleteError('');
+    },
+    onError: (err: any) =>
+      setDeleteError(err?.response?.data?.detail || err?.message || 'Delete failed'),
   });
 
   const openCreate = () => {
@@ -291,9 +304,21 @@ export default function CustomersPage() {
                       />
                     </TableCell>
                     <TableCell align="right">
-                      <Button size="small" onClick={() => openEdit(c)}>
-                        Edit
-                      </Button>
+                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                        <Button size="small" onClick={() => openEdit(c)}>
+                          Edit
+                        </Button>
+                        <Button
+                          size="small"
+                          color="error"
+                          onClick={() => {
+                            setDeleteError('');
+                            setDeleting(c);
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -448,6 +473,33 @@ export default function CustomersPage() {
             onClick={() => save.mutate()}
           >
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(deleting)} onClose={() => setDeleting(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Delete customer?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            This will permanently remove <strong>{deleting?.name}</strong>
+            {deleting?.phone ? ` (${deleting.phone})` : ''} and <strong>all of their invoices /
+            purchases</strong>. This cannot be undone.
+          </Typography>
+          {deleteError && (
+            <Typography color="error" variant="body2" sx={{ mt: 1.5 }}>
+              {String(deleteError)}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleting(null)}>Cancel</Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={remove.isPending || !deleting}
+            onClick={() => deleting && remove.mutate(deleting.id)}
+          >
+            Delete everything
           </Button>
         </DialogActions>
       </Dialog>
