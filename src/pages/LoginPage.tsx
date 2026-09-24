@@ -16,6 +16,7 @@ import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
 import { useAuth } from '../auth/AuthContext';
 import { useThemeMode } from '../theme/ThemeModeContext';
+import { SplashScreen } from '../components/loading-screen';
 
 export default function LoginPage() {
   const { admin, login, loading } = useAuth();
@@ -25,7 +26,8 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (!loading && admin) return <Navigate to="/" replace />;
+  if (loading) return <SplashScreen />;
+  if (admin) return <Navigate to="/" replace />;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();

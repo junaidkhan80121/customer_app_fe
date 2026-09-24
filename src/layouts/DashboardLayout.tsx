@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { LoadingScreen } from '../components/loading-screen';
 import {
   AppBar,
   Box,
@@ -181,7 +182,9 @@ export default function DashboardLayout() {
           overflowX: 'hidden',
         }}
       >
-        <Outlet />
+        <Suspense fallback={<LoadingScreen portal />}>
+          <Outlet />
+        </Suspense>
       </Box>
     </Box>
   );
