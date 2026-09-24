@@ -1,6 +1,14 @@
 export type PointsMode = 'rupees_per_point' | 'percentage_of_amount' | 'per_quantity' | 'manual';
 export type PaymentMode = 'cash' | 'upi' | 'credit' | 'card';
-export type SortKey = 'qty' | 'amount' | 'points';
+export type SortKey =
+  | 'qty'
+  | 'amount'
+  | 'points'
+  | 'customer_name'
+  | 'phone'
+  | 'type_name'
+  | 'invoice_count';
+
 
 export interface PageMeta {
   total: number;

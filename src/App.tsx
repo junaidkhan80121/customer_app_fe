@@ -13,6 +13,7 @@ const InvoiceFormPage = lazy(() => import('./pages/InvoiceFormPage'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const AdminsPage = lazy(() => import('./pages/AdminsPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { admin, loading } = useAuth();
@@ -50,7 +51,7 @@ export default function App() {
             <Route path="settings" element={<SettingsPage />} />
             <Route path="admins" element={<AdminsPage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </>
