@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
@@ -15,7 +15,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableRow,
   TextField,
   Typography,
@@ -23,6 +22,24 @@ import {
 } from '@mui/material';
 import api from '../api/client';
 import type { Admin } from '../api/types';
+import EmptyContent, { EmptyActionButton } from '../components/EmptyContent';
+import PageHeader from '../components/PageHeader';
+import { IllustrationUsers } from '../assets/illustrations';
+import SortableTableHead, {
+  SortOrder,
+  SortableColumn,
+  compareValues,
+  nextSortState,
+} from '../components/table/SortableTableHead';
+
+type AdminSort = 'name' | 'email' | 'status' | 'actions';
+
+const COLUMNS: SortableColumn<AdminSort>[] = [
+  { id: 'name', label: 'Name' },
+  { id: 'email', label: 'Email' },
+  { id: 'status', label: 'Status' },
+  { id: 'actions', label: '', sortable: false },
+];
 
 export default function AdminsPage() {
   const qc = useQueryClient();
@@ -33,11 +50,23 @@ export default function AdminsPage() {
   const [password, setPassword] = useState('');
   const [active, setActive] = useState(true);
   const [error, setError] = useState('');
+  const [sort, setSort] = useState<AdminSort>('name');
+  const [order, setOrder] = useState<SortOrder>('asc');
 
   const { data = [] } = useQuery({
     queryKey: ['admins'],
     queryFn: async () => (await api.get<Admin[]>('/api/admins')).data,
   });
+
+  const rows = useMemo(() => {
+    const list = [...data];
+    list.sort((a, b) => {
+      const av = sort === 'status' ? a.is_active : sort === 'email' ? a.email : a.name;
+      const bv = sort === 'status' ? b.is_active : sort === 'email' ? b.email : b.name;
+      return compareValues(av, bv, order);
+    });
+    return list;
+  }, [data, sort, order]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -60,41 +89,45 @@ export default function AdminsPage() {
 
   return (
     <Stack spacing={3}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Box>
-          <Typography variant="h4">Admins</Typography>
-          <Typography color="text.secondary">Only these users can sign in</Typography>
-        </Box>
-        <Button
-          variant="contained"
-          color="secondary"
-          onClick={() => {
-            setEditing(null);
-            setName('');
-            setEmail('');
-            setPassword('');
-            setActive(true);
-            setError('');
-            setOpen(true);
-          }}
-        >
-          Add admin
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Admins"
+        description="Only these users can sign in"
+        illustration={<IllustrationUsers />}
+        action={
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => {
+              setEditing(null);
+              setName('');
+              setEmail('');
+              setPassword('');
+              setActive(true);
+              setError('');
+              setOpen(true);
+            }}
+          >
+            Add admin
+          </Button>
+        }
+      />
 
       <Card>
         <CardContent>
           <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
+            <SortableTableHead
+              columns={COLUMNS}
+              orderBy={sort}
+              order={order}
+              onRequestSort={(col) => {
+                if (col === 'actions') return;
+                const next = nextSortState(sort, order, col, 'asc');
+                setSort(next.orderBy);
+                setOrder(next.order);
+              }}
+            />
             <TableBody>
-              {data.map((a) => (
+              {rows.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell>{a.name}</TableCell>
                   <TableCell>{a.email}</TableCell>
@@ -123,6 +156,31 @@ export default function AdminsPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {!rows.length && (
+                <TableRow>
+                  <TableCell colSpan={4} sx={{ border: 0, py: 0 }}>
+                    <EmptyContent
+                      compact
+                      title="No admins yet"
+                      description="Add an admin account to manage the shop."
+                      action={
+                        <EmptyActionButton
+                          label="Add admin"
+                          onClick={() => {
+                            setEditing(null);
+                            setName('');
+                            setEmail('');
+                            setPassword('');
+                            setActive(true);
+                            setError('');
+                            setOpen(true);
+                          }}
+                        />
+                      }
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

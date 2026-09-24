@@ -20,7 +20,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TablePagination,
   TableRow,
   TextField,
@@ -31,11 +30,30 @@ import type { Customer, CustomerType, PageMeta } from '../api/types';
 import { num } from '../utils/format';
 import FilterChips, { FilterChipItem } from '../components/FilterChips';
 import ResponsiveTable from '../components/ResponsiveTable';
+import EmptyContent, { EmptyActionButton } from '../components/EmptyContent';
+import PageHeader from '../components/PageHeader';
+import { IllustrationUsers } from '../assets/illustrations';
+import SortableTableHead, {
+  SortOrder,
+  SortableColumn,
+  nextSortState,
+} from '../components/table/SortableTableHead';
 
 interface CustomerPage {
   items: Customer[];
   meta: PageMeta;
 }
+
+type CustomerSort = 'name' | 'phone' | 'type' | 'points' | 'status' | 'actions';
+
+const COLUMNS: SortableColumn<CustomerSort>[] = [
+  { id: 'name', label: 'Name' },
+  { id: 'phone', label: 'Phone' },
+  { id: 'type', label: 'Type' },
+  { id: 'points', label: 'Lifetime points', align: 'right' },
+  { id: 'status', label: 'Status' },
+  { id: 'actions', label: '', sortable: false },
+];
 
 type TypeOption = CustomerType | { inputValue: string; name: string; id?: string };
 
@@ -56,6 +74,8 @@ export default function CustomersPage() {
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
   const [typeId, setTypeId] = useState('');
+  const [sort, setSort] = useState<CustomerSort>('name');
+  const [order, setOrder] = useState<SortOrder>('asc');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -73,8 +93,10 @@ export default function CustomersPage() {
       page_size: pageSize,
       search: search || undefined,
       type_id: typeId || undefined,
+      sort: sort === 'actions' ? 'name' : sort,
+      order,
     }),
-    [page, pageSize, search, typeId],
+    [page, pageSize, search, typeId, sort, order],
   );
 
   const { data, isLoading } = useQuery({
@@ -182,20 +204,21 @@ export default function CustomersPage() {
 
   return (
     <Stack spacing={3}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ xs: 'stretch', sm: 'center' }}
-        spacing={2}
-      >
-        <Box>
-          <Typography variant="h4">Customers</Typography>
-          <Typography color="text.secondary">Plumbers, masons, and other trade buyers</Typography>
-        </Box>
-        <Button variant="contained" color="secondary" onClick={openCreate} sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}>
-          Add customer
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Customers"
+        description="Plumbers, masons, and other trade buyers"
+        illustration={<IllustrationUsers />}
+        action={
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={openCreate}
+            sx={{ alignSelf: { xs: 'stretch', sm: 'center' } }}
+          >
+            Add customer
+          </Button>
+        }
+      />
 
       <Card>
         <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
@@ -241,16 +264,18 @@ export default function CustomersPage() {
 
           <ResponsiveTable>
             <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell align="right">Lifetime points</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell />
-                </TableRow>
-              </TableHead>
+              <SortableTableHead
+                columns={COLUMNS}
+                orderBy={sort}
+                order={order}
+                onRequestSort={(col) => {
+                  if (col === 'actions') return;
+                  const next = nextSortState(sort, order, col, 'asc');
+                  setSort(next.orderBy);
+                  setOrder(next.order);
+                  setPage(0);
+                }}
+              />
               <TableBody>
                 {(data?.items || []).map((c) => (
                   <TableRow key={c.id} hover>
@@ -274,7 +299,23 @@ export default function CustomersPage() {
                 ))}
                 {!isLoading && !data?.items?.length && (
                   <TableRow>
-                    <TableCell colSpan={6}>No customers found</TableCell>
+                    <TableCell colSpan={6} sx={{ border: 0, py: 0 }}>
+                      <EmptyContent
+                        compact
+                        variant={search || typeId ? 'search' : 'empty'}
+                        title={search || typeId ? 'No matching customers' : 'No customers yet'}
+                        description={
+                          search || typeId
+                            ? 'Try a different search or clear the type filter.'
+                            : 'Add your first trade buyer to get started.'
+                        }
+                        action={
+                          !search && !typeId ? (
+                            <EmptyActionButton label="Add customer" onClick={openCreate} />
+                          ) : undefined
+                        }
+                      />
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
