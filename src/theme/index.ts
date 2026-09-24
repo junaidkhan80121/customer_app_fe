@@ -1,4 +1,5 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
+import typography from './typography';
 
 /** Full-viewport soft green wash (not just a top corner blob) */
 export function getAppBackground(mode: 'light' | 'dark') {
@@ -35,18 +36,12 @@ export function getTableBackground(mode: 'light' | 'dark') {
 }
 
 const shared: ThemeOptions = {
-  typography: {
-    fontFamily: '"Public Sans", sans-serif',
-    h4: { fontWeight: 700, fontSize: '1.5rem', '@media (min-width:600px)': { fontSize: '2rem' } },
-    h5: { fontWeight: 700 },
-    h6: { fontWeight: 700 },
-    button: { textTransform: 'none', fontWeight: 600 },
-  },
+  typography,
   shape: { borderRadius: 12 },
   components: {
     MuiButton: {
       styleOverrides: {
-        root: { borderRadius: 8, boxShadow: 'none' },
+        root: { borderRadius: 8, boxShadow: 'none', fontWeight: 700 },
         contained: {
           boxShadow: 'none',
           '&:hover': { boxShadow: 'none' },
@@ -184,7 +179,8 @@ export function createAppTheme(mode: 'light' | 'dark') {
               backgroundColor: isDark ? 'rgba(0,167,111,0.18)' : 'rgba(0,167,111,0.14)',
               color: isDark ? '#FFFFFF' : '#1C252E',
               fontWeight: 600,
-              fontSize: 13,
+              fontSize: '0.8125rem',
+              lineHeight: 1.5,
             },
           },
         },
@@ -195,7 +191,9 @@ export function createAppTheme(mode: 'light' | 'dark') {
             whiteSpace: 'nowrap',
             border: '1px solid rgba(145,158,171,0.24)',
             padding: '12px 16px',
-            fontSize: 14,
+            fontSize: '0.875rem',
+            fontWeight: 400,
+            lineHeight: 22 / 14,
             backgroundColor: 'transparent',
           },
           body: {
@@ -213,6 +211,31 @@ export function createAppTheme(mode: 'light' | 'dark') {
             '&:hover': {
               backgroundColor: isDark ? 'rgba(0,167,111,0.12)' : 'rgba(0,167,111,0.10)',
             },
+          },
+        },
+      },
+      MuiListItemText: {
+        styleOverrides: {
+          primary: {
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            lineHeight: 22 / 14,
+          },
+        },
+      },
+      MuiInputLabel: {
+        styleOverrides: {
+          root: {
+            fontSize: '0.875rem',
+            fontWeight: 500,
+          },
+        },
+      },
+      MuiChip: {
+        styleOverrides: {
+          label: {
+            fontWeight: 600,
+            fontSize: '0.8125rem',
           },
         },
       },
