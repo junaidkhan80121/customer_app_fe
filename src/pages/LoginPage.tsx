@@ -21,6 +21,8 @@ import { IllustrationWelcome } from '../assets/illustrations';
 import Logo from '../components/logo/Logo';
 import { getAppBackground } from '../theme';
 
+const appTitle = import.meta.env.VITE_APP_TITLE?.trim() || 'Lala Traders';
+
 export default function LoginPage() {
   const { admin, login, loading } = useAuth();
   const { mode, toggleMode } = useThemeMode();
@@ -91,7 +93,7 @@ export default function LoginPage() {
         </Box>
         <Box sx={{ textAlign: 'center', maxWidth: 360 }}>
           <Typography variant="h4" sx={{ fontWeight: 800 }}>
-            Lala Traders
+            {appTitle}
           </Typography>
           <Typography color="text.secondary" sx={{ mt: 1 }}>
             Track wholesale purchases, points, and top buyers in one place.
@@ -105,9 +107,9 @@ export default function LoginPage() {
             <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
               <Logo sx={{ width: 44, height: 44, fontSize: 16 }} />
               <Box>
-                <Typography variant="h5">Sign in</Typography>
+                <Typography variant="h5">{appTitle}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Admin access only
+                  Admin sign in
                 </Typography>
               </Box>
             </Stack>
