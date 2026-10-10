@@ -1,5 +1,6 @@
 export type PointsMode = 'rupees_per_point' | 'percentage_of_amount' | 'per_quantity' | 'manual';
 export type PaymentMode = 'cash' | 'upi' | 'credit' | 'card';
+export type SchemeMetric = 'amount' | 'quantity' | 'points';
 export type SortKey =
   | 'qty'
   | 'amount'
@@ -62,8 +63,21 @@ export interface ShopSettings {
   points_per_quantity: number | string;
 }
 
+export interface CatalogItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  sku: string;
+  price: number | string;
+  points_enabled: boolean;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface InvoiceItem {
   id?: string;
+  item_id?: string | null;
+  sku?: string | null;
   item_name: string;
   qty: number | string;
   unit: string;
@@ -87,6 +101,41 @@ export interface Invoice {
   points_overridden: boolean;
   items: InvoiceItem[];
   created_at: string;
+}
+
+export interface Scheme {
+  id: string;
+  name: string;
+  description?: string | null;
+  metric: SchemeMetric;
+  threshold: number | string;
+  start_date?: string | null;
+  end_date?: string | null;
+  is_active: boolean;
+  qualified_count: number;
+  created_at: string;
+}
+
+export interface CustomerSchemeStatus {
+  scheme_id: string;
+  name: string;
+  description?: string | null;
+  metric: SchemeMetric;
+  threshold: number | string;
+  progress: number | string;
+  qualified: boolean;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
+export interface SchemeCustomer {
+  customer_id: string;
+  customer_name: string;
+  phone: string;
+  type_name?: string | null;
+  progress: number | string;
+  invoice_count: number;
+  qualified: boolean;
 }
 
 export interface RankingRow {

@@ -8,6 +8,8 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const CustomersPage = lazy(() => import('./pages/CustomersPage'));
 const CustomerTypesPage = lazy(() => import('./pages/CustomerTypesPage'));
+const ItemsPage = lazy(() => import('./pages/ItemsPage'));
+const SchemesPage = lazy(() => import('./pages/SchemesPage'));
 const PurchasesPage = lazy(() => import('./pages/PurchasesPage'));
 const InvoiceFormPage = lazy(() => import('./pages/InvoiceFormPage'));
 const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage'));
@@ -44,6 +46,8 @@ export default function App() {
             <Route index element={<DashboardPage />} />
             <Route path="customers" element={<CustomersPage />} />
             <Route path="customer-types" element={<CustomerTypesPage />} />
+            <Route path="items" element={<ItemsPage />} />
+            <Route path="schemes" element={<SchemesPage />} />
             <Route path="purchases" element={<PurchasesPage />} />
             <Route path="purchases/new" element={<InvoiceFormPage />} />
             <Route path="purchases/:id" element={<InvoiceFormPage />} />
