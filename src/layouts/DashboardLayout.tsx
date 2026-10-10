@@ -22,7 +22,9 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import CategoryIcon from '@mui/icons-material/Category';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
@@ -38,7 +40,9 @@ const nav = [
   { label: 'Dashboard', path: '/', icon: <DashboardIcon /> },
   { label: 'Customers', path: '/customers', icon: <PeopleIcon /> },
   { label: 'Customer Types', path: '/customer-types', icon: <CategoryIcon /> },
+  { label: 'Items', path: '/items', icon: <Inventory2OutlinedIcon /> },
   { label: 'Purchases', path: '/purchases', icon: <ReceiptLongIcon /> },
+  { label: 'Schemes', path: '/schemes', icon: <WorkspacePremiumOutlinedIcon /> },
   { label: 'Leaderboard', path: '/leaderboard', icon: <LeaderboardIcon /> },
   { label: 'Settings', path: '/settings', icon: <SettingsIcon /> },
   { label: 'Admins', path: '/admins', icon: <AdminPanelSettingsIcon /> },
