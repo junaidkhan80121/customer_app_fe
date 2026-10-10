@@ -38,6 +38,7 @@ import SortableTableHead, {
   SortableColumn,
   nextSortState,
 } from '../components/table/SortableTableHead';
+import CustomerHistoryDialog from '../components/CustomerHistoryDialog';
 
 interface CustomerPage {
   items: Customer[];
@@ -79,6 +80,7 @@ export default function CustomersPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Customer | null>(null);
   const [deleting, setDeleting] = useState<Customer | null>(null);
+  const [history, setHistory] = useState<Customer | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [selectedType, setSelectedType] = useState<TypeOption | null>(null);
   const [error, setError] = useState('');
@@ -291,7 +293,12 @@ export default function CustomersPage() {
               />
               <TableBody>
                 {(data?.items || []).map((c) => (
-                  <TableRow key={c.id} hover>
+                  <TableRow
+                    key={c.id}
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => setHistory(c)}
+                  >
                     <TableCell>{c.name}</TableCell>
                     <TableCell>{c.phone}</TableCell>
                     <TableCell>{c.type_name}</TableCell>
@@ -303,8 +310,11 @@ export default function CustomersPage() {
                         color={c.is_active ? 'success' : 'default'}
                       />
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                       <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                        <Button size="small" onClick={() => setHistory(c)}>
+                          History
+                        </Button>
                         <Button size="small" onClick={() => openEdit(c)}>
                           Edit
                         </Button>
@@ -476,6 +486,8 @@ export default function CustomersPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <CustomerHistoryDialog customer={history} onClose={() => setHistory(null)} />
 
       <Dialog open={Boolean(deleting)} onClose={() => setDeleting(null)} fullWidth maxWidth="xs">
         <DialogTitle>Delete customer?</DialogTitle>

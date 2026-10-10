@@ -3,10 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Card,
   CardContent,
+  Chip,
   FormControl,
   IconButton,
   InputLabel,
@@ -21,23 +23,29 @@ import AddIcon from '@mui/icons-material/Add';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import api from '../api/client';
-import type { Customer, Invoice, PaymentMode, ShopSettings } from '../api/types';
+import type { CatalogItem, Customer, Invoice, PaymentMode, ShopSettings } from '../api/types';
 import { money, num } from '../utils/format';
 
 type Line = {
+  item_id: string;
   item_name: string;
+  sku: string;
   qty: string;
   unit: string;
   unit_price: string;
   points_earned: string;
+  points_enabled: boolean;
 };
 
 const emptyLine = (): Line => ({
+  item_id: '',
   item_name: '',
+  sku: '',
   qty: '1',
   unit: 'piece',
   unit_price: '0',
   points_earned: '',
+  points_enabled: true,
 });
 
 export default function InvoiceFormPage() {
@@ -61,6 +69,16 @@ export default function InvoiceFormPage() {
         .data,
   });
 
+  const { data: catalog } = useQuery({
+    queryKey: ['items-all'],
+    queryFn: async () =>
+      (
+        await api.get<{ items: CatalogItem[] }>('/api/items', {
+          params: { page: 1, page_size: 100, active_only: true, sort: 'name', order: 'asc' },
+        })
+      ).data,
+  });
+
   const { data: settings } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => (await api.get<ShopSettings>('/api/settings')).data,
@@ -81,40 +99,67 @@ export default function InvoiceFormPage() {
     setPointsOverride(existing.points_overridden ? String(existing.points_earned) : '');
     setLines(
       existing.items.map((i) => ({
+        item_id: i.item_id || '',
         item_name: i.item_name,
+        sku: i.sku || '',
         qty: String(i.qty),
         unit: i.unit,
         unit_price: String(i.unit_price),
         points_earned: i.points_earned != null ? String(i.points_earned) : '',
+        points_enabled: true,
       })),
     );
   }, [existing]);
 
+  useEffect(() => {
+    const catalogItems = catalog?.items;
+    if (!catalogItems?.length) return;
+    setLines((prev) => {
+      let changed = false;
+      const next = prev.map((line) => {
+        if (!line.item_id) return line;
+        const match = catalogItems.find((item) => item.id === line.item_id);
+        if (!match || line.points_enabled === match.points_enabled) return line;
+        changed = true;
+        return { ...line, points_enabled: match.points_enabled, sku: line.sku || match.sku };
+      });
+      return changed ? next : prev;
+    });
+  }, [catalog]);
+
   const totals = useMemo(() => {
     let qty = 0;
     let amount = 0;
+    let pointsQty = 0;
+    let pointsAmount = 0;
     for (const l of lines) {
-      qty += Number(l.qty) || 0;
-      amount += (Number(l.qty) || 0) * (Number(l.unit_price) || 0);
+      const lineQty = Number(l.qty) || 0;
+      const lineAmount = lineQty * (Number(l.unit_price) || 0);
+      qty += lineQty;
+      amount += lineAmount;
+      if (l.points_enabled) {
+        pointsQty += lineQty;
+        pointsAmount += lineAmount;
+      }
     }
-    return { qty, amount };
+    return { qty, amount, pointsQty, pointsAmount };
   }, [lines]);
 
   const estimatedPoints = useMemo(() => {
     if (pointsOverride !== '') return Number(pointsOverride) || 0;
     if (!settings) return 0;
     if (settings.points_mode === 'manual') {
-      return lines.reduce((s, l) => s + (Number(l.points_earned) || 0), 0);
+      return lines.reduce((s, l) => (l.points_enabled ? s + (Number(l.points_earned) || 0) : s), 0);
     }
     if (settings.points_mode === 'rupees_per_point') {
       const per = Number(settings.rupees_per_point) || 1;
-      return Math.floor(totals.amount / per);
+      return Math.floor(totals.pointsAmount / per);
     }
     if (settings.points_mode === 'percentage_of_amount') {
-      return (totals.amount * (Number(settings.points_percentage) || 0)) / 100;
+      return (totals.pointsAmount * (Number(settings.points_percentage) || 0)) / 100;
     }
     if (settings.points_mode === 'per_quantity') {
-      return totals.qty * (Number(settings.points_per_quantity) || 0);
+      return totals.pointsQty * (Number(settings.points_per_quantity) || 0);
     }
     return 0;
   }, [settings, totals, lines, pointsOverride]);
@@ -129,12 +174,13 @@ export default function InvoiceFormPage() {
         notes: notes || null,
         points_override: pointsOverride === '' ? null : Number(pointsOverride),
         items: lines.map((l) => ({
+          item_id: l.item_id || null,
           item_name: l.item_name,
           qty: Number(l.qty),
           unit: l.unit,
           unit_price: Number(l.unit_price),
           points_earned:
-            settings?.points_mode === 'manual' && l.points_earned !== ''
+            settings?.points_mode === 'manual' && l.points_enabled && l.points_earned !== ''
               ? Number(l.points_earned)
               : null,
         })),
@@ -238,17 +284,60 @@ export default function InvoiceFormPage() {
                   borderRadius: 2,
                 }}
               >
-                <TextField
-                  label="Item"
-                  value={line.item_name}
-                  onChange={(e) => {
+                <Autocomplete
+                  options={catalog?.items || []}
+                  value={(catalog?.items || []).find((item) => item.id === line.item_id) || null}
+                  inputValue={line.item_name}
+                  getOptionLabel={(option) => `${option.name} (${option.sku})`}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  onChange={(_, item) => {
                     const next = [...lines];
-                    next[idx] = { ...line, item_name: e.target.value };
+                    next[idx] = item
+                      ? {
+                          ...line,
+                          item_id: item.id,
+                          item_name: item.name,
+                          sku: item.sku,
+                          unit_price: String(item.price),
+                          points_enabled: item.points_enabled,
+                          points_earned: item.points_enabled ? line.points_earned : '',
+                        }
+                      : { ...emptyLine(), qty: line.qty, unit: line.unit };
                     setLines(next);
                   }}
+                  onInputChange={(_, value, reason) => {
+                    if (reason !== 'input' && reason !== 'clear') return;
+                    const next = [...lines];
+                    next[idx] =
+                      reason === 'clear'
+                        ? { ...emptyLine(), qty: line.qty, unit: line.unit }
+                        : {
+                            ...line,
+                            item_name: value,
+                            item_id: '',
+                            sku: '',
+                            points_enabled: true,
+                          };
+                    setLines(next);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Item"
+                      placeholder="Select catalog item"
+                      helperText={
+                        line.sku
+                          ? `${line.sku}${line.points_enabled ? '' : ' · points off'}`
+                          : 'Pick an item to use its price and points rule'
+                      }
+                    />
+                  )}
                   sx={{ flex: 2 }}
                   fullWidth
                 />
+                {!line.points_enabled && line.item_id ? (
+                  <Chip size="small" label="No points" sx={{ alignSelf: 'center' }} />
+                ) : null}
                 <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', md: 'auto' } }}>
                   <TextField
                     label="Qty"
